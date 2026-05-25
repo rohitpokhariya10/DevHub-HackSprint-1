@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
-const {hashFunction , comparePassword} = require("../utils/hashPaassword");
+const { hashFunction, comparePassword } = require("../utils/hashPaassword");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 
 //1.
@@ -60,7 +60,7 @@ const loginController = async (req, res) => {
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
-   console.log(password , user.passwordHash);
+  console.log(password, user.passwordHash);
   const isPasswordCorrect = await comparePassword(password, user.passwordHash);
 
   if (!isPasswordCorrect) {
@@ -90,10 +90,37 @@ const loginController = async (req, res) => {
 };
 
 //3.
-const getMeController = async (req , res)=>{
-    return res.status(200).json({
-        message:"Successfully reached here"
-    })
+const getMeController = async (req, res) => {
+  return res.status(200).json({
+    message: "Successfully reached here",
+  });
+};
 
-}
-module.exports = { registerController, loginController , getMeController};
+//4.
+const googleCallback = async (req, res) => {
+  let user = req.user;
+  console.log("user-->", user);
+  const accessToken = await generateAccessToken(user._id);
+  const refreshToken = await generateRefreshToken(user._id);
+  let refreshTokenHash = await hashFunction(refreshToken);
+
+  await User.findOneAndUpdate(user._id , {refreshTokenHash});
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  return res.status(200).json({
+    message: "Google Loggedin successfully",
+  });
+};
+module.exports = {
+  registerController,
+  loginController,
+  getMeController,
+  googleCallback,
+};
