@@ -1,3 +1,4 @@
+const Profile = require("../models/profile.model");
 const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
 const { hashFunction, comparePassword } = require("../utils/hashPaassword");
@@ -25,6 +26,11 @@ const registerController = async (req, res) => {
     email,
     isEmailVerified: true,
   });
+  
+  //So that we can link user and profile
+  await Profile.create({
+    user:newUser._id
+  })
 
   //
   let accessToken = generateAccessToken(newUser._id);
@@ -33,7 +39,7 @@ const registerController = async (req, res) => {
   newUser.refreshTokenHash = refreshTokenHash;
   await newUser.save();
 
-  res.cookie("accesToken", accessToken, {
+  res.cookie("accessToken", accessToken, {
     httpOnly: true,
   });
   res.cookie("refreshToken", refreshToken, {
