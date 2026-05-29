@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 dns.setDefaultResultOrder("ipv4first");
 
+// Establishes the single mongoose connection used by the application.
 const connectToDb = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);

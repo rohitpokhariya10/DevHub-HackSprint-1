@@ -10,11 +10,12 @@ const passport = require("../config/passport");
 
 const authRouter = express.Router();
 
+// Local authentication endpoints issue httpOnly cookie-based sessions.
 authRouter.post("/register", registerController);
 authRouter.post("/login", loginController);
 authRouter.get("/get-me", authMiddleware, getMeController); //Protected route
 
-//Google authentication routes
+// Starts the Google OAuth consent flow without creating an Express session.
 authRouter.get(
   "/google",
   passport.authenticate("google", {
@@ -22,7 +23,7 @@ authRouter.get(
     session: false,
   }),
 );
-//
+// Handles Google's callback, then delegates token issuing to the controller.
 authRouter.get(
   "/google/callback",
   passport.authenticate("google", {

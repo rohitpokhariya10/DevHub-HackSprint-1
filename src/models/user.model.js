@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const sendmail = require("../services/mail.service");
 
-
+// Owns authentication identity and private account state for every user.
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -19,11 +19,13 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Hidden by default so accidental user queries do not leak credential hashes.
     passwordHash: {
       type: String,
       select: false,
     },
 
+    // Sparse allows local-only users to exist while keeping Google identities unique.
     googleId: {
       type: String,
       unique: true,
@@ -47,6 +49,7 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Stores only the hashed refresh token to support revocation without saving raw tokens.
     refreshTokenHash: {
       type: String,
       select: false,
@@ -61,7 +64,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//User get a mail after registration
+// Optional post-save welcome email hook kept disabled until email onboarding is required.
 // userSchema.post("save", async function (docs) {
 //   console.log("docs-->", docs);
 

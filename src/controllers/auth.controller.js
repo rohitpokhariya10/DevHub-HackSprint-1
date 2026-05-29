@@ -4,7 +4,7 @@ const ApiError = require("../utils/apiError");
 const { hashFunction, comparePassword } = require("../utils/hashPaassword");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 
-//1.
+// Registers a local account, creates its profile shell, and starts an authenticated session.
 const registerController = async (req, res) => {
   let { email, name, password } = req.body;
 
@@ -18,7 +18,7 @@ const registerController = async (req, res) => {
     throw new ApiError(409, "User already Exist");
   }
 
-  //
+  // Store only the password hash so raw credentials never reach the database.
   let passwordHash = await hashFunction(password);
   let newUser = await User.create({
     name,
@@ -32,7 +32,7 @@ const registerController = async (req, res) => {
     user:newUser._id
   })
 
-  //
+  // Refresh tokens are hashed at rest to reduce impact if the database is exposed.
   let accessToken = generateAccessToken(newUser._id);
   let refreshToken = generateRefreshToken(newUser._id);
   let refreshTokenHash = await hashFunction(refreshToken);
@@ -51,7 +51,7 @@ const registerController = async (req, res) => {
   });
 };
 
-//2.
+// Authenticates a local user and rotates the refresh token for the new session.
 const loginController = async (req, res) => {
   let { email, password } = req.body;
 
@@ -95,14 +95,14 @@ const loginController = async (req, res) => {
   });
 };
 
-//3.
+// Lightweight protected endpoint used by clients to verify the current session.
 const getMeController = async (req, res) => {
   return res.status(200).json({
     message: "Successfully reached here",
   });
 };
 
-//4.
+// Completes Google OAuth login and issues the same cookie-based session as local auth.
 const googleCallback = async (req, res) => {
   let user = req.user;
   console.log("user-->", user);

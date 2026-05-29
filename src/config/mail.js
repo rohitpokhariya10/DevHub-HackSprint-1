@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 
+// Reusable SMTP transporter for all transactional email.
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,

@@ -4,7 +4,7 @@ const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
 const uploadToImageKit = require("../utils/imageKitUtils");
 
-//
+// Returns the authenticated user's profile with safe user fields attached.
 const getMyProfileController = async (req, res) => {
   console.log("user", req.user);
   //findOne --> Find the document in the Profile collection whose "user" field value is equal to req.user._id.
@@ -22,7 +22,7 @@ const getMyProfileController = async (req, res) => {
   });
 };
 
-//
+// Applies partial profile updates while normalizing list fields for consistent storage.
 const updateMyProfileController = async (req, res) => {
   let { headline, bio, techStack, socialLinks, skills, location } = req.body;
 
@@ -87,7 +87,7 @@ const updateMyProfileController = async (req, res) => {
   });
 };
 
-// Public developer profile
+// Public lookup endpoint for rendering a developer profile by username.
 const getPublicProfileController = async (req, res) => {
   console.log("req.params-->", req.params);
   let { name } = req.params;
@@ -111,7 +111,7 @@ const getPublicProfileController = async (req, res) => {
   });
 };
 
-//upload loggedin user profie
+// Replaces the logged-in user's profile image and removes the previous ImageKit file.
 const updateProfilePictureController = async (req, res) => {
   console.log("req.file-->", req.file);
   if (!req.file) {
@@ -175,6 +175,7 @@ const updateBannerController = async (req, res) => {
   }
   console.log("profile-->" , profile);
 
+  // Keep external storage clean by deleting the previous banner before saving a new one.
   if(profile.banner?.fileId){
     try{
       await imagekit.deleteFile(profile.banner.fileId)//deleteFile method only accept fielId
@@ -186,6 +187,7 @@ const updateBannerController = async (req, res) => {
     }
   }
 
+   // ImageKit accepts base64 input here because multer keeps uploads in memory.
    const uploadedImage = await imagekit.upload({
     file: req.file.buffer.toString("base64"),
     fileName: `banner-${req.user._id}-${Date.now()}`,

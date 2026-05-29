@@ -11,12 +11,14 @@ const upload = require("../middleware/multer.middleware");
 
 const profileRouter = express.Router();
 
+// Profile routes keep private self-management and public profile discovery together.
 // logged-in user can read own profile
 profileRouter.get("/me", authMiddleware, getMyProfileController);
 // logged-in user can update own profile
 profileRouter.patch("/me", authMiddleware, updateMyProfileController);
 // Public developer profile
 profileRouter.get("/:name", getPublicProfileController);
+// Upload middleware reads the file into memory before ImageKit persistence happens.
 //These 2 routes are for uploading/updating the logged-in user’s profile picture and banner image.
 profileRouter.patch(
   "/me/profile-picture",

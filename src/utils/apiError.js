@@ -1,5 +1,5 @@
 
-
+// Application-level error type for predictable HTTP status and message handling.
 class ApiError extends Error{
     constructor(statusCode , message){
         super(message);

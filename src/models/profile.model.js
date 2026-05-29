@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 
+// Stores all developer-facing profile data separately from authentication details.
 const profileSchema = new mongoose.Schema(
   {
+    // One profile belongs to one user; unique keeps the relationship one-to-one.
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -9,6 +11,7 @@ const profileSchema = new mongoose.Schema(
       unique: true,
     },
 
+    // Persist both the public URL and provider fileId so old assets can be deleted.
     profilePicture: {
       url: {
         type: String,
@@ -20,6 +23,7 @@ const profileSchema = new mongoose.Schema(
       },
     },
 
+    // Banner follows the same ImageKit lifecycle as profile pictures.
     banner: {
       url: {
         type: String,
@@ -59,6 +63,7 @@ const profileSchema = new mongoose.Schema(
       },
     ],
 
+    // Optional public links used by profile pages and portfolio discovery.
     socialLinks: {
       github: {
         type: String,

@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
 
+// Verifies the access token cookie and attaches the authenticated user to req.user.
 const authMiddleware = async (req, res, next) => {
   try {
     // Read the access token sent by the client in cookies.

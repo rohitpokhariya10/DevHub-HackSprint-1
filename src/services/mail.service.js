@@ -1,5 +1,6 @@
 const transporter = require("../config/mail");
 
+// Thin mail service wrapper so controllers/hooks do not depend on nodemailer directly.
 const sendmail = async ({ to, subject, text, html }) => {
   try {
     const info = await transporter.sendMail({

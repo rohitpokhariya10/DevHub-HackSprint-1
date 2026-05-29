@@ -3,6 +3,7 @@ const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
+// Google OAuth strategy maps provider identities onto the local User model.
 passport.use(
   new GoogleStrategy(
     {
