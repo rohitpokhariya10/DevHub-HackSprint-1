@@ -1,5 +1,8 @@
+const imagekit = require("../config/imagekit");
 const Profile = require("../models/profile.model");
+const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
+const uploadToImageKit = require("../utils/imageKitUtils");
 
 //
 const getMyProfileController = async (req, res) => {
@@ -35,7 +38,12 @@ const updateMyProfileController = async (req, res) => {
     }
     //filter(Boolean) removes falsy value from an array
     let Skills = [
-      ...new Set(skills.map((skill) => skill.trim()).filter(Boolean)),
+      ...new Set(
+        skills
+          .filter(Boolean)
+          .map((skill) => skill.trim())
+          .filter(Boolean),
+      ),
     ];
     updateData.skills = Skills;
     console.log("skills", Skills);
@@ -47,9 +55,14 @@ const updateMyProfileController = async (req, res) => {
     }
     //filter(Boolean) removes falsy value from an array
     let TechStack = [
-      ...new Set(techStack.map((ts) => ts.trim()).filter(Boolean)),
+      ...new Set(
+        techStack
+          .filter(Boolean)
+          .map((ts) => ts.trim())
+          .filter(Boolean),
+      ),
     ];
-    updateData.techStack = TechStack
+    updateData.techStack = TechStack;
     console.log("TechStack", TechStack);
   }
 
@@ -59,8 +72,9 @@ const updateMyProfileController = async (req, res) => {
     {
       new: true,
       runValidators: true,
+      upsert: true, //If the data exists, update it; otherwise, create a new one.
     },
-  ).populate("user", "name , email");
+  ).populate("user", "name  email");
 
   if (!profile) {
     throw new ApiError(404, "Profile not found");
@@ -68,7 +82,89 @@ const updateMyProfileController = async (req, res) => {
 
   return res.status(200).json({
     message: "Profile updated successfully",
-    success:true,
+    success: true,
+    profile,
   });
 };
-module.exports = { getMyProfileController, updateMyProfileController };
+
+// Public developer profile
+const getPublicProfileController = async (req, res) => {
+  console.log("req.params-->", req.params);
+  let { name } = req.params;
+
+  let foundUser = await User.findOne({ name }).select("name email");
+  if (!foundUser) {
+    throw new ApiError(404, "User not found");
+  }
+  let profile = await Profile.findOne({ user: foundUser._id }).populate(
+    "user",
+    "name email",
+  );
+  console.log("profile-->", profile);
+  if (!profile) {
+    throw new ApiError(404, "Profile not found");
+  }
+  return res.status(200).json({
+    message: "Public Profile fetched successfully",
+    success: true,
+    profile,
+  });
+};
+
+//upload loggedin user profie
+const updateProfilePictureController = async (req, res) => {
+  console.log("req.file-->", req.file);
+  if (!req.file) {
+    throw new ApiError(400, "Profile picture is required");
+  }
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/webp",
+  ];
+
+  if (!allowedMimeTypes.includes(req.file.mimetype)) {
+    throw new ApiError(400, "Only JPEG, PNG, JPG and WEBP images are allowed");
+  }
+
+  const profile = await Profile.findOne({ user: req.user._id });
+  if (!profile) {
+    throw new ApiError(404, "Profile not found");
+  }
+  // Delete old profile picture from ImageKit if exists
+  if (profile.profilePicture?.fileId) {
+    try {
+      await imagekit.deleteFile(profile.profilePicture?.fileId);
+    } catch (error) {
+      console.log("Old profile picture delete failed:", error.message);
+    }
+  }
+  const uploadImage = await uploadToImageKit(
+    req.file.buffer,
+    `profilePicture-${req.user.id}-${Date.now()}`,
+    "/devHub/profilePicture",
+  );
+  console.log("uploadImage-->", uploadImage);
+
+  profile.profilePicture = {
+    url: uploadImage.url,
+    fileId: uploadImage.fileId,
+  };
+  await profile.save();
+  return res.status(200).json({
+    success: true,
+    message: "Profile picture updated successfully",
+    profile,
+  });
+};
+const updateBannerController = async (req, res) => {
+
+};
+module.exports = {
+  getMyProfileController,
+  updateMyProfileController,
+  getPublicProfileController,
+  updateProfilePictureController,
+  updateBannerController,
+};

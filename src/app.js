@@ -8,7 +8,7 @@ const profileRouter = require("./routes/profile.routes");
 
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(express.urlencoded({ extended: true }));
 //
 app.use("/api/auth" , authRouter);
 //
