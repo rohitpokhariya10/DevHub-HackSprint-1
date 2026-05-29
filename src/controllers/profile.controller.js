@@ -136,6 +136,7 @@ const updateProfilePictureController = async (req, res) => {
   if (profile.profilePicture?.fileId) {
     try {
       await imagekit.deleteFile(profile.profilePicture?.fileId);
+     
     } catch (error) {
       console.log("Old profile picture delete failed:", error.message);
     }
@@ -159,6 +160,50 @@ const updateProfilePictureController = async (req, res) => {
   });
 };
 const updateBannerController = async (req, res) => {
+  console.log("req.file-->" , req.file);
+  if(!req.file){
+    throw new ApiError(404 , "Banner image is required");
+  }
+  const allowedMimeTypes = ["image/jpeg" , "image/webp" , "image/png" ,"image/jpg"];
+  if(!allowedMimeTypes.includes(req.file.mimetype)){
+      throw new ApiError(400, "Only JPEG, PNG, JPG and WEBP images are allowed");
+  }
+
+  const profile = await Profile.findOne({user : req.user._id});
+    if (!profile) {
+    throw new ApiError(404, "Profile not found");
+  }
+  console.log("profile-->" , profile);
+
+  if(profile.banner?.fileId){
+    try{
+      await imagekit.deleteFile(profile.banner.fileId)//deleteFile method only accept fielId
+      console.log("banner deleted" , profile.banner.fileId)
+
+    }
+    catch(error){
+       console.log("Old banner delete failed:", error.message);
+    }
+  }
+
+   const uploadedImage = await imagekit.upload({
+    file: req.file.buffer.toString("base64"),
+    fileName: `banner-${req.user._id}-${Date.now()}`,
+    folder: "/devHub/banners",
+  });
+  console.log("uploadedImage-->" , uploadedImage);
+
+  profile.banner ={
+    url:uploadedImage.url,
+    fileId:uploadedImage.fileId,
+  }
+
+  await profile.save();
+
+  return res.status(200).json({
+    message:"Banner upload successfully",
+    profile
+  })
 
 };
 module.exports = {

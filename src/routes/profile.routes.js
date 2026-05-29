@@ -24,6 +24,6 @@ profileRouter.patch(
   upload.single("profilePicture"),
   updateProfilePictureController,
 );
-
+profileRouter.patch("/me/banner", authMiddleware, upload.single("banner"),updateBannerController);
 
 module.exports = profileRouter;
