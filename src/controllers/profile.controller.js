@@ -136,7 +136,6 @@ const updateProfilePictureController = async (req, res) => {
   if (profile.profilePicture?.fileId) {
     try {
       await imagekit.deleteFile(profile.profilePicture?.fileId);
-     
     } catch (error) {
       console.log("Old profile picture delete failed:", error.message);
     }
@@ -160,67 +159,96 @@ const updateProfilePictureController = async (req, res) => {
   });
 };
 const updateBannerController = async (req, res) => {
-  console.log("req.file-->" , req.file);
-  if(!req.file){
-    throw new ApiError(404 , "Banner image is required");
+  console.log("req.file-->", req.file);
+  if (!req.file) {
+    throw new ApiError(404, "Banner image is required");
   }
-  const allowedMimeTypes = ["image/jpeg" , "image/webp" , "image/png" ,"image/jpg"];
-  if(!allowedMimeTypes.includes(req.file.mimetype)){
-      throw new ApiError(400, "Only JPEG, PNG, JPG and WEBP images are allowed");
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/webp",
+    "image/png",
+    "image/jpg",
+  ];
+  if (!allowedMimeTypes.includes(req.file.mimetype)) {
+    throw new ApiError(400, "Only JPEG, PNG, JPG and WEBP images are allowed");
   }
 
-  const profile = await Profile.findOne({user : req.user._id});
-    if (!profile) {
+  const profile = await Profile.findOne({ user: req.user._id });
+  if (!profile) {
     throw new ApiError(404, "Profile not found");
   }
-  console.log("profile-->" , profile);
+  console.log("profile-->", profile);
 
   // Keep external storage clean by deleting the previous banner before saving a new one.
-  if(profile.banner?.fileId){
-    try{
-      await imagekit.deleteFile(profile.banner.fileId)//deleteFile method only accept fielId
-      console.log("banner deleted" , profile.banner.fileId)
-
-    }
-    catch(error){
-       console.log("Old banner delete failed:", error.message);
+  if (profile.banner?.fileId) {
+    try {
+      await imagekit.deleteFile(profile.banner.fileId); //deleteFile method only accept fielId
+      console.log("banner deleted", profile.banner.fileId);
+    } catch (error) {
+      console.log("Old banner delete failed:", error.message);
     }
   }
 
-   // ImageKit accepts base64 input here because multer keeps uploads in memory.
-   const uploadedImage = await imagekit.upload({
+  // ImageKit accepts base64 input here because multer keeps uploads in memory.
+  const uploadedImage = await imagekit.upload({
     file: req.file.buffer.toString("base64"),
     fileName: `banner-${req.user._id}-${Date.now()}`,
     folder: "/devHub/banners",
   });
-  console.log("uploadedImage-->" , uploadedImage);
+  console.log("uploadedImage-->", uploadedImage);
 
-  profile.banner ={
-    url:uploadedImage.url,
-    fileId:uploadedImage.fileId,
-  }
+  profile.banner = {
+    url: uploadedImage.url,
+    fileId: uploadedImage.fileId,
+  };
 
   await profile.save();
 
   return res.status(200).json({
-    message:"Banner upload successfully",
-    profile
-  })
-
+    message: "Banner upload successfully",
+    profile,
+  });
 };
 
-const searchProfilesController = async (req , res)=>{
-  console.log("req.query-->" , req.query)
-  return res.status(200).json({
-    message:"User profile fetched successfully"
-  })
+const searchProfilesController = async (req, res) => {
+  const { query, skill, techStack, location } = req.query;
 
-}
+  let filter = {};
+
+  if (query) {
+    const regex = new RegExp(query, "i");
+    //MongoDb query operator ---> $or = []
+    filter.$or = [
+      { headline: regex },
+      { skills: regex },
+      { techStack: regex },
+      { location: regex },
+    ];
+  }
+  if (skill) {
+    filter.skills = new RegExp(skill, "i");
+  }
+  if (techStack) {
+    filter.techStack = new RegExp(techStack, "i");
+  }
+  if (location) {
+    filter.location = new RegExp(location, "i");
+  }
+  //console.log("filter-->" , filter);
+
+  let profiles = await Profile.findOne(filter).populate("user" , "name email");
+
+  //console.log("req.query-->", req.query);
+  return res.status(200).json({
+    message: "User profile fetched successfully",
+    profiles
+  });
+};
 module.exports = {
   getMyProfileController,
   updateMyProfileController,
   getPublicProfileController,
   updateProfilePictureController,
   updateBannerController,
-  searchProfilesController
+  searchProfilesController,
 };
