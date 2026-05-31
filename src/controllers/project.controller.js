@@ -117,9 +117,24 @@ const getSingleProjectByIdController = async (req, res) => {
     project
   })
 };
+
+const deleteProjectController = async (req , res)=>{
+  let {projectId} = req.params;
+  if(!projectId){
+    throw new ApiError(401, "Unauthorized access");
+  }
+
+  let deletedProject = await Project.findByIdAndDelete(projectId);
+  //console.log("deleted Project-->" , deletedProject);
+  return res.status(200).json({
+    message:"Project deleted successfully",
+    success:true
+  })
+}
 module.exports = {
   createProjectController,
   getMyProjectController,
   getUserProjectsController,
   getSingleProjectByIdController,
+  deleteProjectController
 };
