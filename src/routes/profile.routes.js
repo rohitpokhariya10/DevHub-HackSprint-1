@@ -14,7 +14,7 @@ const profileRouter = express.Router();
 
 // Profile routes keep private self-management and public profile discovery together.
 // logged-in user can read own profile
-profileRouter.get("/me", authMiddleware, getMyProfileController);
+profileRouter.get("/me", getMyProfileController);
 // logged-in user can update own profile
 profileRouter.patch("/me", authMiddleware, updateMyProfileController);
 // Upload middleware reads the file into memory before ImageKit persistence happens.
