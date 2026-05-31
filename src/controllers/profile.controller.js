@@ -208,10 +208,19 @@ const updateBannerController = async (req, res) => {
   })
 
 };
+
+const searchProfilesController = async (req , res)=>{
+  console.log("req.query-->" , req.query)
+  return res.status(200).json({
+    message:"User profile fetched successfully"
+  })
+
+}
 module.exports = {
   getMyProfileController,
   updateMyProfileController,
   getPublicProfileController,
   updateProfilePictureController,
   updateBannerController,
+  searchProfilesController
 };
