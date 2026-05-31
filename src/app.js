@@ -11,7 +11,7 @@ const projectRouter = require("./routes/project.routes");
 // Global parsers are registered before routers so all endpoints share request handling.
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 // Authentication routes own registration, login, and OAuth callbacks.
 app.use("/api/auth" , authRouter);
 // Profile routes own private profile management and public profile lookup.

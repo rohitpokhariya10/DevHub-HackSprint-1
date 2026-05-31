@@ -63,4 +63,18 @@ const createProjectController = async (req, res) => {
   });
 };
 
-module.exports = { createProjectController };
+const getMyProjectController = async (req, res) => {
+  let { id } = req.user;
+  console.log("owner of the project-->", id);
+  if (!id) {
+    throw new ApiError(401, "Unauthorized access");
+  }
+  let myProjects = await Project.find({ user: id });
+  console.log("myProjects-->", myProjects);
+  return res.status(200).json({
+    message: "Project fetched successfully",
+    success: true,
+    myProjects,
+  });
+};
+module.exports = { createProjectController, getMyProjectController };
