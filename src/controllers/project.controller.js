@@ -79,25 +79,47 @@ const getMyProjectController = async (req, res) => {
   });
 };
 
-const getUserProjectsController = async (req , res)=>{
-  let {name} = req.params;
-  if(!name){
-    throw new ApiError(400 , "Username is required for search")
+const getUserProjectsController = async (req, res) => {
+  let { name } = req.params;
+  if (!name) {
+    throw new ApiError(400, "Username is required for search");
   }
 
-  let user = await User.findOne({name});
-  console.log("I want to see this User Projects-->" , user);
+  let user = await User.findOne({ name });
+  console.log("I want to see this User Projects-->", user);
 
-  if(!user){
-    throw new ApiError(404 , "User not found");
+  if (!user) {
+    throw new ApiError(404, "User not found");
   }
-  let projects = await Project.find({user:user._id});
-  console.log("projects-->" , projects)
+  let projects = await Project.find({ user: user._id });
+  console.log("projects-->", projects);
   return res.status(200).json({
-    success:false,
-    message:"User project fetched successfully",
-    projects
-  })
+    success: false,
+    message: "User project fetched successfully",
+    projects,
+  });
+};
 
-}
-module.exports = { createProjectController, getMyProjectController , getUserProjectsController };
+const getSingleProjectByIdController = async (req, res) => {
+  const { projectId } = req.params;
+  console.log("Project id-->" , projectId)
+  if (!projectId) {
+    throw new ApiError(401, "Unauthorized access");
+  }
+  let project = await Project.findById(projectId);
+  console.log("This is the searched Prooject-->", project);
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+  return res.status(200).json({
+    message:"Project fetched successfully",
+    success:true,
+    project
+  })
+};
+module.exports = {
+  createProjectController,
+  getMyProjectController,
+  getUserProjectsController,
+  getSingleProjectByIdController,
+};

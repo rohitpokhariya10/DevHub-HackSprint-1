@@ -1,5 +1,5 @@
 const express = require("express");
-const { createProjectController, getMyProjectController, getUserProjectsController } = require("../controllers/project.controller");
+const { createProjectController, getMyProjectController, getUserProjectsController, getSingleProjectByIdController } = require("../controllers/project.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 const projectRouter = express.Router();
 const upload = require("../middleware/multer.middleware")
@@ -8,7 +8,8 @@ const upload = require("../middleware/multer.middleware")
 
 projectRouter.post("/create" , authMiddleware , upload.single("thumbnail") ,createProjectController);
 projectRouter.get("/me" , authMiddleware , getMyProjectController);
-projectRouter.get("/me/:name" , getUserProjectsController);
+projectRouter.get("/user/:name" , getUserProjectsController);
+projectRouter.get("/:projectId" , getSingleProjectByIdController);
 
 
 

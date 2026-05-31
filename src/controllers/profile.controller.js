@@ -6,9 +6,10 @@ const uploadToImageKit = require("../utils/imageKitUtils");
 
 // Returns the authenticated user's profile with safe user fields attached.
 const getMyProfileController = async (req, res) => {
-  console.log("user", req.user);
+  console.log("user id-->", req.user);
+  let id = req.user._id;
   //findOne --> Find the document in the Profile collection whose "user" field value is equal to req.user._id.
-  let profile = await Profile.findOne({ user: req.user._id }).populate(
+  let profile = await Profile.findOne({ user: id }).populate(
     "user",
     "name email",
   );
@@ -236,12 +237,12 @@ const searchProfilesController = async (req, res) => {
   }
   //console.log("filter-->" , filter);
 
-  let profiles = await Profile.findOne(filter).populate("user" , "name email");
+  let profiles = await Profile.findOne(filter).populate("user", "name email");
 
   //console.log("req.query-->", req.query);
   return res.status(200).json({
     message: "User profile fetched successfully",
-    profiles
+    profiles,
   });
 };
 module.exports = {
