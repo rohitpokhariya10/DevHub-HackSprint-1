@@ -9,8 +9,8 @@ const upload = require("../middleware/multer.middleware")
 projectRouter.post("/create" , authMiddleware , upload.single("thumbnail") ,createProjectController);
 projectRouter.get("/me" , authMiddleware , getMyProjectController);
 projectRouter.get("/user/:name" , getUserProjectsController);
-projectRouter.get("/:projectId" , getSingleProjectByIdController);
-projectRouter.delete("/:projectId"  , deleteProjectController)
+projectRouter.get("/:projectId" , authMiddleware  ,getSingleProjectByIdController);
+projectRouter.delete("/:projectId" , authMiddleware , deleteProjectController)
 
 
 

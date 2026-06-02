@@ -102,39 +102,63 @@ const getUserProjectsController = async (req, res) => {
 
 const getSingleProjectByIdController = async (req, res) => {
   const { projectId } = req.params;
-  console.log("Project id-->" , projectId)
+  console.log("Project id-->", projectId);
+  const userId = req.user._id;
+  console.log("userId-->", userId);
   if (!projectId) {
-    throw new ApiError(401, "Unauthorized access");
+    throw new ApiError(400, "Project id is required");
   }
-  let project = await Project.findById(projectId);
+  let project = null;
+  if (userId) {
+    project = await Project.findOneAndUpdate(
+      { _id: projectId, viewedBy: { $ne: userId } },
+      { $inc: { views: 1 }, $addToSet: { viewedBy: userId } },
+      { new: true },
+    );
+  }
+  project = await Project.findById(projectId);
   console.log("This is the searched Prooject-->", project);
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
   return res.status(200).json({
-    message:"Project fetched successfully",
-    success:true,
-    project
-  })
+    message: "Project fetched successfully",
+    success: true,
+    project,
+  });
 };
 
-const deleteProjectController = async (req , res)=>{
-  let {projectId} = req.params;
-  if(!projectId){
+const deleteProjectController = async (req, res) => {
+  let { projectId } = req.params;
+  let { id } = req.user;
+  //console.log("user id jo project delete krega-->" , id);
+  if (!projectId) {
     throw new ApiError(401, "Unauthorized access");
   }
 
-  let deletedProject = await Project.findByIdAndDelete(projectId);
-  //console.log("deleted Project-->" , deletedProject);
+  let project = await Project.findById(projectId);
+  //console.log("project-->" , project);
+
+  console.log(id, project.user.toString());
+  //owner ship check
+  if (id !== project.user.toString()) {
+    throw new ApiError(401, "Unauthorized access");
+  }
+
+  await Project.deleteOne(project);
+
+  //let deletedProject = await Project.findByIdAndDelete(projectId);
+  console.log("deleted Project-->", project);
   return res.status(200).json({
-    message:"Project deleted successfully",
-    success:true
-  })
-}
+    message: "Project deleted successfully",
+    success: true,
+    deletedProject: project,
+  });
+};
 module.exports = {
   createProjectController,
   getMyProjectController,
   getUserProjectsController,
   getSingleProjectByIdController,
-  deleteProjectController
+  deleteProjectController,
 };

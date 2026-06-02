@@ -9,7 +9,7 @@ const getMyProfileController = async (req, res) => {
   console.log("user id-->", req.user);
   let id = req.user._id;
   //findOne --> Find the document in the Profile collection whose "user" field value is equal to req.user._id.
-  let profile = await Profile.findOne({ user: id }).populate(
+  let profile = await Profile.findOne({user:id}).populate(
     "user",
     "name email",
   );
