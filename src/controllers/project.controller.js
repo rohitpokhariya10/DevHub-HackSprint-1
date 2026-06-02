@@ -1,8 +1,14 @@
+const { default: mongoose } = require("mongoose");
 const Project = require("../models/project.model");
 const User = require("../models/user.model");
 const ApiError = require("../utils/apiError");
 const uploadToImageKit = require("../utils/imageKitUtils");
 
+/**
+ * Creates a project owned by the authenticated user.
+ * Validates required metadata, normalizes the technology stack, uploads the
+ * thumbnail, and persists the resulting project document.
+ */
 const createProjectController = async (req, res) => {
   let { title, shortDescription, description, githubUrl, liveUrl } = req.body;
   let { id } = req.user;
@@ -38,6 +44,7 @@ const createProjectController = async (req, res) => {
 
   let githubURL = githubUrl;
   let liveURL = liveUrl;
+  // Upload the thumbnail before persistence so the stored project references the hosted asset.
   const thumbnail = await uploadToImageKit(
     file.buffer,
     `${Date.now()}-${file.fieldname}`,
@@ -64,6 +71,9 @@ const createProjectController = async (req, res) => {
   });
 };
 
+/**
+ * Returns all projects created by the currently authenticated user.
+ */
 const getMyProjectController = async (req, res) => {
   let { id } = req.user;
   console.log("owner of the project-->", id);
@@ -79,6 +89,9 @@ const getMyProjectController = async (req, res) => {
   });
 };
 
+/**
+ * Returns the public project collection for the user identified by name.
+ */
 const getUserProjectsController = async (req, res) => {
   let { name } = req.params;
   if (!name) {
@@ -100,6 +113,9 @@ const getUserProjectsController = async (req, res) => {
   });
 };
 
+/**
+ * Fetches a project by id and records a unique view for the authenticated user.
+ */
 const getSingleProjectByIdController = async (req, res) => {
   const { projectId } = req.params;
   console.log("Project id-->", projectId);
@@ -109,6 +125,7 @@ const getSingleProjectByIdController = async (req, res) => {
     throw new ApiError(400, "Project id is required");
   }
   let project = null;
+  // Count at most one view per authenticated user while retaining the viewer reference.
   if (userId) {
     project = await Project.findOneAndUpdate(
       { _id: projectId, viewedBy: { $ne: userId } },
@@ -128,6 +145,9 @@ const getSingleProjectByIdController = async (req, res) => {
   });
 };
 
+/**
+ * Deletes a project after confirming that the authenticated user owns it.
+ */
 const deleteProjectController = async (req, res) => {
   let { projectId } = req.params;
   let { id } = req.user;
@@ -155,10 +175,73 @@ const deleteProjectController = async (req, res) => {
     deletedProject: project,
   });
 };
+
+/**
+ * Updates an existing project after validating ownership and required fields.
+ * Replaces the thumbnail with the newly uploaded asset before saving changes.
+ */
+const updateProjectController = async (req, res) => {
+  let { projectId } = req.params;
+  let { title, shortDescription, description, githubUrl, liveUrl } = req.body;
+  let { techStack } = req.body;
+  let userId = req.user._id;
+  let file = req.file;
+  console.log("file-->" , file);
+
+  if (!projectId) {
+    throw new ApiError(403, "Unauthorized access");
+  }
+  if (!title) {
+    throw new ApiError(400, "Title is required");
+  }
+  if (!shortDescription) {
+    throw new ApiError(400, "Shortdescription is required");
+  }
+  if (!description) {
+    throw new ApiError(400, "Description is required");
+  }
+  let project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Prject not found");
+  }
+  if (userId != project.user.toString()) {
+    throw new ApiError(401, "Unauthorized access");
+  }
+  // De-duplicate technology values while preserving the first occurrence order.
+  if (techStack != undefined) {
+    project.techStack = [
+      ...new Set(
+        techStack
+          .trim()
+          .split(",")
+          .map((tech) => tech.trim())
+          .filter(Boolean),
+      ),
+    ];
+  }
+  let thumbnail = await uploadToImageKit(file.buffer, `${Date.now()} - ${file.fieldname}` , "/devHub/projectThumbnail")
+  //console.log("thumbnail-->" , thumbnail);
+  project.title = title;
+  project.shortDescription = shortDescription;
+  project.description = description;
+  project.githubUrl = githubUrl;
+  project.liveUrl = liveUrl;
+  project.thumbnail = thumbnail;
+
+  await project.save();
+
+  return res.status(200).json({
+    message: "Project updated successfully",
+    success: true,
+    updatedProject: project,
+  });
+};
 module.exports = {
   createProjectController,
   getMyProjectController,
   getUserProjectsController,
   getSingleProjectByIdController,
   deleteProjectController,
+  updateProjectController,
 };
